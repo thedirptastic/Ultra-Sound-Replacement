@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -128,6 +128,19 @@ public static class SoundPackController
         result.AddAspect(new SoundAspect("ShotgunPump2", "ShotgunSounds\\ShotgunGreen", true, SoundPackType.Shotgun));
         result.AddAspect(new SoundAspect("OverCharged", "ShotgunSounds\\ShotgunGreen", true, SoundPackType.Shotgun));
 
+        // Green Alt
+
+        //result.AddAspect(new SoundAspect("ShotgunShootSoundsJH", "ShotgunShootSounds", "ShotgunSounds\\ShotgunGreenAlt", SoundPackType.Shotgun));
+        result.AddAspect(new SoundAspect("PumpExplosion1JH", "ShotgunSounds\\ShotgunGreenAlt", true, SoundPackType.Shotgun));
+        result.AddAspect(new SoundAspect("ShotgunPump1JH", "ShotgunPump1", "ShotgunSounds\\ShotgunGreenAlt", SoundPackType.Shotgun));
+        result.AddAspect(new SoundAspect("ShotgunPump2JH", "ShotgunPump2", "ShotgunSounds\\ShotgunGreenAlt", SoundPackType.Shotgun));
+        result.AddAspect(new SoundAspect("OverChargedJH", "ShotgunSounds\\ShotgunGreenAlt", true, SoundPackType.Shotgun));
+        //result.AddAspect(new SoundAspect("ShotgunChargeLoop1JH", "ShotgunSounds\\ShotgunGreenAlt", true, SoundPackType.Shotgun));
+
+        // Red
+        result.AddAspect(new SoundAspect("ShotgunShootSounds2", "ShotgunShootSounds", "ShotgunSounds\\ShotgunRed", SoundPackType.Shotgun));
+        result.AddAspect(new SoundAspect("MainShotReload2", "ShotgunSounds\\ShotgunBlue", true, SoundPackType.Shotgun));
+
         // Nailgun
 
         // Blue
@@ -174,6 +187,16 @@ public static class SoundPackController
         result.AddAspect(new SoundAspect("SawBreak0True", "SawBreak", "NailgunSounds\\NailgunGreenAlt", SoundPackType.Nailgun));
         result.AddAspect(new SoundAspect("SawBounce0True", "SawBounce", "NailgunSounds\\NailgunGreenAlt", SoundPackType.Nailgun));
 
+        // Red
+        result.AddAspect(new SoundAspect("NailgunShot2False", "NailgunShot", "NailgunSounds\\NailgunRed", SoundPackType.Nailgun));
+        result.AddAspect(new SoundAspect("NailZap2False", "NailZap", "NailgunSounds\\NailgunRed", SoundPackType.Nailgun));
+        result.AddAspect(new SoundAspect("BarrelSpin2False", "BarrelSpin", "NailgunSounds\\NailgunRed", SoundPackType.Nailgun));
+        result.AddAspect(new SoundAspect("NewCharge2False", "NewCharge", "NailgunSounds\\NailgunRed", SoundPackType.Nailgun));
+        result.AddAspect(new SoundAspect("HeatSteam2False", "HeatSteam  ", "NailgunSounds\\NailgunRed", SoundPackType.Nailgun));
+
+        // Red alt
+        result.AddAspect(new SoundAspect("BarrelSpin2True", "BarrelSpin", "NailgunSounds\\NailgunRedAlt", SoundPackType.Nailgun));
+        result.AddAspect(new SoundAspect("NailgunShot2True", "NailgunShot", "NailgunSounds\\NailgunRedAlt", SoundPackType.Nailgun));
 
         // Rocket Launcher blue
         result.AddAspect(new SoundAspect("RocketLauncherClunkSounds0", "RocketLauncherClunkSounds", "RocketLauncherSounds\\RocketLauncherBlue", SoundPackType.RocketLauncher));
@@ -192,6 +215,9 @@ public static class SoundPackController
         result.AddAspect(new SoundAspect("RocketLauncherCannonballChargeUp", "RocketLauncherCannonballChargeUp", "RocketLauncherSounds\\RocketLauncherGreen", SoundPackType.RocketLauncher));
         result.AddAspect(new SoundAspect("RocketLauncherCannonballTimerWindUp", "RocketLauncherCannonballTimerWindUp", "RocketLauncherSounds\\RocketLauncherGreen", SoundPackType.RocketLauncher));
         result.AddAspect(new SoundAspect("RocketLauncherCannonballBounce", "RocketLauncherCannonballBounce", "RocketLauncherSounds\\RocketLauncherGreen", SoundPackType.RocketLauncher));
+
+        // Rocket Launcher red 
+        result.AddAspect(new SoundAspect("RocketLauncherShootSounds2", "RocketLauncherShootSounds", "RocketLauncherSounds\\RocketLauncherRed", SoundPackType.RocketLauncher));
 
 
         allSoundPacks.Add(name, result);
@@ -432,31 +458,50 @@ public static class SoundPackController
     }
 
     public static void SetAudioSourceClip(AudioSource source, string name, SoundPackType type, bool playSource = false)
+{
+    if (source == null)
     {
-        if (source == null)
+        Debug.LogError("Got a null AudioSource while handling " + name);
+        return;
+    }
+    
+    if (source.clip != null && name != "Random" && !stockLoadedClips.Contains(source.clip.name))
+    {
+        if (!allSoundPacks.ContainsKey("Stock"))
         {
-            Debug.Log("Got a null audiosource while handling " + name);
+            Debug.LogError("Stock sound pack not found!");
             return;
         }
-        if (name != "Random" && !stockLoadedClips.Contains(source.clip.name) && source.clip != null)
+        
+        var aspect = allSoundPacks["Stock"].GetAspect(name);
+        if (aspect == null)
         {
-            //if (!stockLoadedAspects.Contains(name))
-                //stockLoadedAspects.Add(name);
-            allSoundPacks["Stock"].GetAspect(name).allClips.Add(source.clip);
+            return;
         }
+        
+        aspect.allClips.Add(source.clip);
+    }
 
-        SoundPack pack = revolverSoundPack;
-        if (type != SoundPackType.All)
-            pack = RetrieveSoundPackByType(type);
-        if (pack != null)
+    SoundPack pack = revolverSoundPack;
+    if (type != SoundPackType.All)
+    {
+        pack = RetrieveSoundPackByType(type);
+        if (pack == null)
         {
-            AudioClip clip = pack.GetRandomClipFromAspect(name, type);
-            if (clip != null)
-            {
-                source.clip = clip;
-                if (playSource)
-                    source.Play();
-            }
+            return;
+        }
+    }
+
+    AudioClip clip = pack.GetRandomClipFromAspect(name, type);
+    if (clip == null)
+    {
+        return;
+    }
+
+    source.clip = clip;
+    if (playSource)
+        {
+            source.Play();
         }
     }
 
