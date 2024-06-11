@@ -1,45 +1,60 @@
-﻿using HarmonyLib;
+using BepInEx;
+using HarmonyLib;
+using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UMM;
 using System.Reflection;
 
-[UKPlugin("tempy.soundreplacement", "UKSoundReplacement", "1.2.5", "Replaces gun sounds from sound packs", true, true)]
-public class Plugin : UKMod
+[BepInPlugin("tempy.soundreplacement", "UKSoundReplacement", "1.2.5")]
+public class Plugin : BaseUnityPlugin
 {
+
+    private static Dictionary<string, Dictionary<string, string>> savedData = new Dictionary<string, Dictionary<string, string>>();
+    private static FileInfo SaveFile = null;
+
     public static Plugin instance { get; private set; }
     private static Harmony harmony;
+    public string modFolder { get; internal set; }
 
-    public override void OnModLoaded()
+    void SetPersistentModData(string key, string value) {
+        SetModData("mod", key, value);
+    }
+
+    string RetrieveStringPersistentModData(string key) {
+        return RetrieveModData(key, "mod");
+    }
+
+    void Awake()
     {
+        string path = Assembly.GetExecutingAssembly().Location;
+        path = path.Substring(0, path.LastIndexOf(Path.DirectorySeparatorChar)) + Path.DirectorySeparatorChar + "save.json";
+        SaveFile = new FileInfo(path);
+        if (SaveFile.Exists)
+        {
+            using (StreamReader jFile = SaveFile.OpenText())
+            {
+                savedData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(jFile.ReadToEnd());
+                if (savedData == null)
+                    savedData = new Dictionary<string, Dictionary<string, string>>();
+                jFile.Close();
+            }
+        }
+        else
+        {
+            SaveFile.Create();
+            Debug.Log("Making save!");
+        }
+        
+        modFolder = System.IO.Directory.GetCurrentDirectory();
+
+        Debug.Log(modFolder);
         instance = this;
         harmony = new Harmony("tempy.soundreplacement");
         //Assembly.Load(modFolder + "\\TagLibSharp.dll");
         harmony.PatchAll();
         SoundPackController.CreateNewSoundPack("Stock");
-        Debug.Log("Searching " + Directory.GetCurrentDirectory() + " for .uksr files");
-        //StartCoroutine(SoundPackController.LoadCgMusic(modFolder, this));
-        foreach (FileInfo file in new DirectoryInfo(Directory.GetCurrentDirectory()).GetFiles("*.uksr", SearchOption.AllDirectories))
-        {
-            using (StreamReader jFile = file.OpenText())
-            {
-                Dictionary<string, string> jValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(jFile.ReadToEnd());
-                string name = "No Name";
-                if (jValues.ContainsKey("name"))
-                    name = jValues["name"];
-                if (name != "Template")
-                {
-                    Debug.Log("Found .uksr " + name + " at path " + file.FullName);
-                    SoundPackController.SoundPack newPack = SoundPackController.CreateNewSoundPack(name);
-                    if (newPack != null)
-                        StartCoroutine(newPack.LoadFromDirectory(file.Directory, this));
-                }
-                jFile.Close();
-            }
-        }
-
 
         Debug.Log("Searching " + this.modFolder + " for .uksr files");
         //StartCoroutine(SoundPackController.LoadCgMusic(modFolder, this));
@@ -118,11 +133,30 @@ public class Plugin : UKMod
         }
     }
 
-    public override void OnModUnload()
+    public static string RetrieveModData(string key, string modName)
+            {
+                if (savedData.ContainsKey(modName))
+                {
+                    if (savedData[modName].ContainsKey(key))
+                        return savedData[modName][key];
+                        Debug.Log(savedData);
+                }
+                return null;
+            }
+
+    public static void SetModData(string modName, string key, string value)
     {
-        base.OnModUnload();
-        SoundPackController.SetCurrentSoundPack("Stock", SoundPackController.SoundPackType.All, false);
-        harmony.UnpatchSelf();
+        if (!savedData.ContainsKey(modName))
+        {
+            Dictionary<string, string> newDict = new Dictionary<string, string>();
+            newDict.Add(key, value);
+            savedData.Add(modName, newDict);
+            Debug.Log(savedData);
+        }
+        else if (!savedData[modName].ContainsKey(key))
+            savedData[modName].Add(key, value);
+        else
+            savedData[modName][key] = value;
     }
 }
 
