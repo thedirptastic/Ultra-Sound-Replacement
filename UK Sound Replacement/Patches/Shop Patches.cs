@@ -1,8 +1,9 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 [HarmonyPatch(typeof(ShopZone), "Start")]
 public static class Inject_SoundPackShops
@@ -14,7 +15,7 @@ public static class Inject_SoundPackShops
             // Grab parents and such
             Transform enemies = GameObject.Instantiate(__instance.transform.Find("Canvas").Find("Enemies"), __instance.transform.Find("Canvas").Find("Weapons"));
             enemies.Find("BackButton (2)").gameObject.SetActive(false);
-            Text editingText = enemies.Find("Panel").Find("Title").GetComponent<Text>();
+            TextMeshProUGUI editingText = enemies.Find("Panel").Find("Title").GetComponent<TMPro.TextMeshProUGUI>();
             editingText.text = "SOUND PACKS";
             editingText.transform.parent = enemies.parent;
             editingText.gameObject.SetActive(false);
@@ -23,7 +24,7 @@ public static class Inject_SoundPackShops
             // Making the button that opens the sound packs page
             Transform newArmsButton = GameObject.Instantiate(__instance.transform.Find("Canvas").Find("Weapons").Find("ArmButton").gameObject, __instance.transform.Find("Canvas").Find("Weapons")).transform;
             newArmsButton.localPosition = new Vector3(-180f, -144.7f, -45.00326f);
-            newArmsButton.gameObject.GetComponentInChildren<Text>(true).text = "SOUND PACKS";
+            newArmsButton.gameObject.GetComponentInChildren<TMPro.TextMeshProUGUI>(true).text = "SOUND PACKS";
             GameObject.Destroy(newArmsButton.GetComponent<ShopCategory>());
             ShopButton button = newArmsButton.GetComponent<ShopButton>();
             button.toActivate = new GameObject[]
@@ -186,7 +187,7 @@ public static class Inject_SoundPackShops
             newAll.localPosition = new Vector3(0f, -85f, -45f);
             newAll.GetComponent<ShopButton>().toActivate = new GameObject[] { };
             newAll.GetComponent<ShopButton>().toDeactivate = new GameObject[] { };
-            newAll.gameObject.transform.GetComponentInChildren<Text>().text = "ALL";
+            newAll.gameObject.transform.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "ALL";
             newAll.GetComponent<Button>().onClick.AddListener(delegate
             {
                 SoundPackController.SetCurrentSoundPack(selectedPack.name, SoundPackController.SoundPackType.All);
@@ -207,7 +208,7 @@ public static class Inject_SoundPackShops
             newBack.localScale = new Vector3(0.74757f, 0.74757f, 0.74757f);
             newBack.GetComponent<ShopButton>().toActivate = new GameObject[] { contentParent.gameObject };
             newBack.GetComponent<ShopButton>().toDeactivate = new GameObject[] { newPageParent };
-            newBack.gameObject.GetComponentInChildren<Text>().text = "BACK";
+            newBack.gameObject.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "BACK";
             newBack.GetComponent<Button>().onClick.AddListener(delegate
             {
                 editingText.text = "SOUND PACKS";
@@ -345,7 +346,7 @@ public static class Inject_SoundPackShops
                 newText.transform.localPosition = Vector3.zero;
                 newText.transform.localScale = new Vector3(0.4167529f, 0.4167529f, 0.4167529f);
                 newText.layer = 5;
-                Text text = newText.GetComponentInChildren<Text>();
+                TMPro.TextMeshProUGUI text = newText.GetComponentInChildren<TMPro.TextMeshProUGUI>();
                 text.text = pack.name;
                 text.raycastTarget = false;
             }
@@ -357,10 +358,10 @@ public static class Inject_SoundPackShops
 [HarmonyPatch(typeof(WaveMenu), "Start")]
 public static class Inject_CgMusicSelector
 {
-    public static void Prefix(ScreenZone __instance) 
+    public static void Prefix(ScreenZone __instance)
     {
 
-        
+
         /*
         if (__instance.transform.Find("Canvas").Find("Waves") != null)
         {
@@ -405,7 +406,7 @@ public static class Inject_CgMusicSelector
             Text titleRText = newRText.GetComponent<Text>();
             titleRText.resizeTextForBestFit = true;
             titleRText.text = "Random";
-            
+
             GameObject stockButton = GameObject.Instantiate(exampleButton, exampleButton.transform.parent);
             Button sButton = stockButton.GetComponent<Button>();
             sButton.onClick.AddListener(delegate
@@ -535,7 +536,7 @@ public static class Inject_CgMusicSelector
 
             GameObject newButton = GameObject.Instantiate(__instance.transform.Find("Canvas").Find("Main Menu").Find("WavesButton").gameObject, __instance.transform.Find("Canvas").Find("Main Menu"));
             newButton.transform.localPosition -= new Vector3(0f, 60f, 0f);
-            newButton.GetComponentInChildren<Text>().text = "MUSIC";    
+            newButton.GetComponentInChildren<Text>().text = "MUSIC";
             ShopButton musicShopButton = newButton.GetComponent<ShopButton>();
             musicShopButton.toDeactivate = musicShopButton.toDeactivate.AddToArray(musicShopButton.toActivate[0]);
             musicShopButton.toActivate = new GameObject[] { newPage.gameObject };
